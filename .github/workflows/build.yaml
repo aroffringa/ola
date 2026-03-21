@@ -1,5 +1,9 @@
 name: build
 on: [push, pull_request]
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: "${{ matrix.id }}"
@@ -59,6 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all tags for generating OLA_BUILD_NAME
+          persist-credentials: false
       - name: Install build tools
         shell: bash
         run: |
@@ -116,7 +121,8 @@ jobs:
         # actually exclude it, so it must first be touched
         run: |
           touch ola-${{ matrix.id }}-source-tree.tar.gz
-          tar --exclude=ola-${{ matrix.id }}-source-tree.tar.gz -cvzf ola-${{ matrix.id }}-source-tree.tar.gz .
+          touch .git
+          tar --exclude=ola-${{ matrix.id }}-source-tree.tar.gz --exclude=.git -cvzf ola-${{ matrix.id }}-source-tree.tar.gz .
       - name: SHA256 artifact archives
         if: always()
         run: sha256sum ola-*.tar.gz

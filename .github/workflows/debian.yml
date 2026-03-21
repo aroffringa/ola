@@ -3,6 +3,10 @@
 
 name: debian
 on: [push, pull_request]
+
+permissions:
+  contents: read
+
 jobs:
   debian-build:
     name: 'Debian Build ${{ matrix.image_tag }} ${{ matrix.architecture }}'
@@ -30,6 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all tags for generating OLA_BUILD_NAME
+          persist-credentials: false
       - name: Generate build name
         shell: bash
         run: |
@@ -102,6 +107,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all tags for generating OLA_DEBIAN_BUILD_VERSION
+          persist-credentials: false
       - name: Generate build name # Job step outputs can't be passed between builds for matrix jobs, so we re-generate
         shell: bash
         run: |
