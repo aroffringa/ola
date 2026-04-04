@@ -132,7 +132,6 @@ AS_IF([test "x$ac_cv_gnu_plus_plus_11" = xyes],
       ])
 AS_IF([test "x$require_gnu_plus_plus_11" = xyes],
       [CXXFLAGS="$CXXFLAGS -std=gnu++11"])
-AM_CONDITIONAL([GNU_PLUS_PLUS_11_DEPRECATIONS], [test "x$require_gnu_plus_plus_11" = xyes])
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -149,6 +148,7 @@ AC_CHECK_HEADERS([asm/termbits.h asm/termios.h assert.h dlfcn.h endian.h \
                   execinfo.h linux/if_packet.h math.h net/ethernet.h \
                   stropts.h sys/ioctl.h sys/param.h sys/types.h sys/uio.h \
                   sysexits.h])
+AC_CHECK_HEADERS([libkern/OSByteOrder.h])
 AC_CHECK_HEADERS([winsock2.h winerror.h])
 AC_CHECK_HEADERS([random])
 
