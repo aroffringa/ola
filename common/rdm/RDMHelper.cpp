@@ -1223,7 +1223,7 @@ string UnitToString(uint8_t unit) {
     case UNITS_RPM:
       return "RPM";
     case UNITS_BYTE_PER_SECOND:
-      return "bps";
+      return "Bps";
     default:
       ostringstream str;
       str << "Unknown, was " << static_cast<int>(unit);
