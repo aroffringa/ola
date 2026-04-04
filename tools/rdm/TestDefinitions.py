@@ -28,6 +28,7 @@ from ola.RDMConstants import (INTERFACE_HARDWARE_TYPE_ETHERNET,
                               RDM_MANUFACTURER_SD_MAX, RDM_MANUFACTURER_SD_MIN,
                               RDM_MAX_DOMAIN_NAME_LENGTH,
                               RDM_MAX_HOSTNAME_LENGTH,
+                              RDM_MAX_SEARCH_DOMAIN_LENGTH,
                               RDM_MAX_SERIAL_NUMBER_LENGTH,
                               RDM_MAX_STRING_LENGTH,
                               RDM_MAX_TEST_DATA_PATTERN_LENGTH,
@@ -7280,9 +7281,11 @@ class GetListInterfaces(TestMixins.GetMixin,
       return
 
     interfaces = []
+    count_by_interface = {}
 
     for interface in fields['interfaces']:
       interface_id = interface['interface_identifier']
+      count_by_interface[interface_id] = count_by_interface.get(interface_id, 0) + 1
       if (interface_id < RDM_INTERFACE_INDEX_MIN or
           interface_id > RDM_INTERFACE_INDEX_MAX):
         self.AddWarning('Interface index %d is outside allowed range (%d to '
@@ -7296,6 +7299,12 @@ class GetListInterfaces(TestMixins.GetMixin,
         self.AddAdvisory('Possible error, found unusual hardware type %d for '
                          'interface %d' %
                          (interface['interface_hardware_type'], interface_id))
+
+    # Check for duplicate interfaces
+    for interface, count in count_by_interface.items():
+      if count > 1:
+        self.AddAdvisory('Interface %s listed %d times in list interfaces' %
+                         (interface, count))
 
     self.SetProperty(self.PROVIDES[0], interfaces)
 
@@ -8450,11 +8459,14 @@ class AllSubDevicesGetSearchDomain(TestMixins.AllSubDevicesGetMixin,
   PID = 'SEARCH_DOMAIN'
 
 
-# class GetSearchDomain(TestMixins.,
-#                       OptionalParameterTestFixture):
-#   CATEGORY = TestCategory.
-#   PID = 'SEARCH_DOMAIN'
-# TODO(peter): Test get
+class GetSearchDomain(TestMixins.GetStringMixin,
+                      OptionalParameterTestFixture):
+  CATEGORY = TestCategory.E133_MANAGEMENT
+  PID = 'SEARCH_DOMAIN'
+  EXPECTED_FIELDS = ['search_domain']
+  PROVIDES = ['search_domain']
+  MAX_LENGTH = RDM_MAX_SEARCH_DOMAIN_LENGTH
+  # TODO(Peter): Validate invalid search domains?
 
 
 class GetSearchDomainWithData(TestMixins.GetWithDataMixin,
@@ -8465,7 +8477,7 @@ class GetSearchDomainWithData(TestMixins.GetWithDataMixin,
 
 # class SetSearchDomain(TestMixins.,
 #                       OptionalParameterTestFixture):
-#   CATEGORY = TestCategory.
+#   CATEGORY = TestCategory.E133_MANAGEMENT
 #   PID = 'SEARCH_DOMAIN'
 # TODO(peter): Test set
 
@@ -8473,12 +8485,6 @@ class GetSearchDomainWithData(TestMixins.GetWithDataMixin,
 class SetSearchDomainWithNoData(TestMixins.SetWithNoDataMixin,
                                 OptionalParameterTestFixture):
   """Set SEARCH_DOMAIN command with no data."""
-  PID = 'SEARCH_DOMAIN'
-
-
-class SetSearchDomainWithExtraData(TestMixins.SetWithDataMixin,
-                                   OptionalParameterTestFixture):
-  """Send a SET SEARCH_DOMAIN command with extra data."""
   PID = 'SEARCH_DOMAIN'
 
 
@@ -8490,7 +8496,7 @@ class AllSubDevicesGetBrokerStatus(TestMixins.AllSubDevicesGetMixin,
 
 # class GetBrokerStatus(TestMixins.,
 #                       OptionalParameterTestFixture):
-#   CATEGORY = TestCategory.
+#   CATEGORY = TestCategory.E133_MANAGEMENT
 #   PID = 'BROKER_STATUS'
 # TODO(peter): Test get
 
@@ -8503,7 +8509,7 @@ class GetBrokerStatusWithData(TestMixins.GetWithDataMixin,
 
 # class SetBrokerStatus(TestMixins.,
 #                       OptionalParameterTestFixture):
-#   CATEGORY = TestCategory.
+#   CATEGORY = TestCategory.E133_MANAGEMENT
 #   PID = 'BROKER_STATUS'
 # TODO(peter): Test set
 
