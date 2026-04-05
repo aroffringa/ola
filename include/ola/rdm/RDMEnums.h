@@ -381,6 +381,9 @@ typedef enum {
 } rdm_command_class;
 
 
+// Remember to update the other places when adding new data types:
+// common/rdm/RDMHelper.cpp
+// Likely our PID schema code too, if you want to support it there
 typedef enum {
   DS_NOT_DEFINED = 0x0,
   DS_BIT_FIELD = 0x01,
