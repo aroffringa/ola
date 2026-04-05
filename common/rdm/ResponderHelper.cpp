@@ -34,6 +34,7 @@
 #include "ola/network/MACAddress.h"
 #include "ola/network/NetworkUtils.h"
 #include "ola/rdm/RDMEnums.h"
+#include "ola/rdm/ResponderEndpointManager.h"
 #include "ola/rdm/ResponderHelper.h"
 #include "ola/rdm/ResponderSensor.h"
 #include "ola/strings/Utils.h"
@@ -81,7 +82,7 @@ bool ResponderHelper::ExtractUInt32(const RDMRequest *request,
 }
 
 bool ResponderHelper::ExtractString(const RDMRequest *request,
-                                    std::string *output,
+                                    string *output,
                                     uint8_t max_length) {
   if (request->ParamDataSize() > max_length) {
     return false;
@@ -965,7 +966,7 @@ RDMResponse *ResponderHelper::GetParamDescription(
     uint32_t min_value,
     uint32_t default_value,
     uint32_t max_value,
-    const string description,
+    const string &description,
     uint8_t queued_message_count) {
   PACK(
   struct parameter_description_s {
@@ -1016,11 +1017,11 @@ RDMResponse *ResponderHelper::GetParamDescription(
 }
 
 RDMResponse *ResponderHelper::GetASCIIParamDescription(
-        const RDMRequest *request,
-        uint16_t pid,
-        rdm_command_class command_class,
-        const string description,
-        uint8_t queued_message_count) {
+    const RDMRequest *request,
+    uint16_t pid,
+    rdm_command_class command_class,
+    const string &description,
+    uint8_t queued_message_count) {
   return GetParamDescription(
       request,
       pid,
@@ -1037,12 +1038,12 @@ RDMResponse *ResponderHelper::GetASCIIParamDescription(
 }
 
 RDMResponse *ResponderHelper::GetBitFieldParamDescription(
-        const RDMRequest *request,
-        uint16_t pid,
-        uint8_t pdl_size,
-        rdm_command_class command_class,
-        const string description,
-        uint8_t queued_message_count) {
+    const RDMRequest *request,
+    uint16_t pid,
+    uint8_t pdl_size,
+    rdm_command_class command_class,
+    const string &description,
+    uint8_t queued_message_count) {
   return GetParamDescription(
       request,
       pid,
@@ -1273,7 +1274,7 @@ RDMResponse *ResponderHelper::GetMetadataParameterVersion(
 RDMResponse *ResponderHelper::GetMetadataJSON(
     const RDMRequest *request,
     uint16_t pid,
-    const string json,
+    const string &json,
     uint8_t queued_message_count) {
   PACK(
   struct metadata_json_s {
@@ -1300,6 +1301,55 @@ RDMResponse *ResponderHelper::GetMetadataJSON(
       param_data_size,
       RDM_ACK,
       queued_message_count);
+}
+
+RDMResponse *ResponderHelper::GetEndpointList(
+    const RDMRequest *request,
+    const ola::rdm::EndpointManager *endpoint_manager,
+    uint8_t queued_message_count) {
+  PACK(
+  struct endpoint_info_s {
+    uint16_t endpoint_id;
+    uint8_t endpoint_type;
+  });
+  STATIC_ASSERT(sizeof(endpoint_info_s) == 3);
+
+  PACK(
+  struct endpoint_list_s {
+    uint32_t list_change_number;
+    endpoint_info_s endpoints[5];
+  });
+  STATIC_ASSERT(sizeof(endpoint_list_s) == (4 + (sizeof(endpoint_info_s) * 5)));
+
+  struct endpoint_list_s endpoint_list;
+  endpoint_list.list_change_number = HostToNetwork(endpoint_manager->list_change_number());
+
+  vector<uint16_t> endpoints;
+
+  endpoint_manager->EndpointIDs(&endpoints);
+  for (unsigned int i = 0; i < endpoints.size(); i++) {
+    endpoint_list.endpoints[i].endpoint_id = HostToNetwork(endpoints[i]);
+  }
+
+  unsigned int param_data_size = (
+      sizeof(endpoint_list) -
+      sizeof(endpoint_list.endpoints) + (sizeof(endpoint_info_s) * endpoints.size()));
+
+  return GetResponseFromData(
+      request,
+      reinterpret_cast<uint8_t*>(&endpoint_list),
+      param_data_size,
+      RDM_ACK,
+      queued_message_count);
+}
+
+RDMResponse *ResponderHelper::GetEndpointListChange(
+    const RDMRequest *request,
+    const ola::rdm::EndpointManager *endpoint_manager,
+    uint8_t queued_message_count) {
+  return GetUInt32Value(request,
+                        NetworkToHost(endpoint_manager->list_change_number()),
+                        queued_message_count);
 }
 
 
@@ -1361,8 +1411,8 @@ RDMResponse *ResponderHelper::SetString(
 }
 
 RDMResponse *ResponderHelper::GetBoolValue(const RDMRequest *request,
-                                                 bool value,
-                                                 uint8_t queued_message_count) {
+                                           bool value,
+                                           uint8_t queued_message_count) {
   if (request->ParamDataSize()) {
     return NackWithReason(request, NR_FORMAT_ERROR, queued_message_count);
   }
@@ -1373,8 +1423,8 @@ RDMResponse *ResponderHelper::GetBoolValue(const RDMRequest *request,
 }
 
 RDMResponse *ResponderHelper::SetBoolValue(const RDMRequest *request,
-                                                 bool *value,
-                                                 uint8_t queued_message_count) {
+                                           bool *value,
+                                           uint8_t queued_message_count) {
   uint8_t arg;
   if (!ResponderHelper::ExtractUInt8(request, &arg)) {
     return NackWithReason(request, NR_FORMAT_ERROR, queued_message_count);
@@ -1390,8 +1440,8 @@ RDMResponse *ResponderHelper::SetBoolValue(const RDMRequest *request,
 
 template<typename T>
 static RDMResponse *GenericGetIntValue(const RDMRequest *request,
-                                             T value,
-                                             uint8_t queued_message_count = 0) {
+                                       T value,
+                                       uint8_t queued_message_count = 0) {
   if (request->ParamDataSize()) {
     return NackWithReason(request, NR_FORMAT_ERROR, queued_message_count);
   }
@@ -1427,8 +1477,8 @@ RDMResponse *ResponderHelper::GetUInt32Value(
 
 template<typename T>
 static RDMResponse *GenericSetIntValue(const RDMRequest *request,
-                                             T *value,
-                                             uint8_t queued_message_count = 0) {
+                                       T *value,
+                                       uint8_t queued_message_count = 0) {
   if (!GenericExtractValue(request, value)) {
     return NackWithReason(request, NR_FORMAT_ERROR, queued_message_count);
   }
