@@ -34,6 +34,7 @@
 #include "ola/network/MACAddress.h"
 #include "ola/network/NetworkUtils.h"
 #include "ola/rdm/RDMEnums.h"
+#include "ola/rdm/ResponderEndpointManager.h"
 #include "ola/rdm/ResponderHelper.h"
 #include "ola/rdm/ResponderSensor.h"
 #include "ola/strings/Utils.h"
@@ -1301,7 +1302,6 @@ RDMResponse *ResponderHelper::GetMetadataJSON(
       RDM_ACK,
       queued_message_count);
 }
-
 
 /**
  * @brief Handle a request that returns a string
