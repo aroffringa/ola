@@ -32,7 +32,6 @@
 #include <ola/network/Interface.h>
 #include <ola/rdm/NetworkManagerInterface.h>
 #include <ola/rdm/RDMCommand.h>
-#include <ola/rdm/ResponderEndpointManager.h>
 #include <ola/rdm/ResponderNSCStatus.h>
 #include <ola/rdm/ResponderPersonality.h>
 #include <ola/rdm/ResponderSensor.h>
