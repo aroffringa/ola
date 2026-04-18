@@ -274,17 +274,6 @@ class ResponderHelper {
         const std::string &json,
         uint8_t queued_message_count = 0);
 
-    // E1.37-7 Helpers
-    static RDMResponse *GetEndpointList(
-        const RDMRequest *request,
-        const ola::rdm::EndpointManager *endpoint_manager,
-        uint8_t queued_message_count = 0);
-
-    static RDMResponse *GetEndpointListChange(
-        const RDMRequest *request,
-        const ola::rdm::EndpointManager *endpoint_manager,
-        uint8_t queued_message_count = 0);
-
     // Generic Helpers.
     static RDMResponse *GetString(
         const RDMRequest *request,
